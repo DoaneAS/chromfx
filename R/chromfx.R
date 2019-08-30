@@ -33,10 +33,11 @@
 #' @return GRanges
 #' @export
 readPeakSummits <- function(psum, genome="hg38"){
+    names(psum) <- basename(psum)
     if (genome=="mm10"){
-        slevels <- mm10s
+        slevels <- GenomeInfoDb::seqlevels(mm10s)
     } else {
-        slevels <- hg38s
+        slevels <- GenomeInfoDb::seqlevels(hg38s)
     }
     summG = list()
     for (p in names(psum)){
@@ -49,7 +50,9 @@ readPeakSummits <- function(psum, genome="hg38"){
         names(zz) <- basename(zz$name)
         summG[[p]] <- trim(zz) ## per sample unique summits
     }
-    unlist(summG)
+    grl <- GRangesList(summG)
+    gr <- unlist(grl)
+    return(gr)
 }
 
 
@@ -93,13 +96,14 @@ getAtlasPeaks <- function(peaksummits)
     hitlist <- as(GenomicRanges::findOverlaps(gr), "List")
     gr <- keepone(gr, hitlist)
     r2 <- length(gr) - 1
+    message(print(r1))
     while (r1 != r2) {
         r1 = length(gr)
         gr = gr[order(gr$score, decreasing=TRUE)]
         hitlist <- as(findOverlaps(gr), "List")
         gr <- keepone(gr, hitlist)
         r2 = length(gr)
-        print(c(r1, r2))
+        message(print(r2))
     }
     return(gr)
 }
