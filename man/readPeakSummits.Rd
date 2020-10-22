@@ -9,7 +9,7 @@ readPeakSummits(psum, genome = "hg38")
 \arguments{
 \item{psum}{paths to sample peak summits bed file}
 
-\item{genome}{reference genome, either "hg3* (default) or "mm10"}
+\item{genome}{reference genome, either "hg38 (default) or "mm10"}
 }
 \value{
 GRanges

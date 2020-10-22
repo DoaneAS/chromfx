@@ -2,5 +2,7 @@
 
 export(getAtlasPeaks)
 export(readPeakSummits)
+import(GenomicRanges)
+import(SummarizedExperiment)
 importFrom(GenomeInfoDb,seqlevels)
 importFrom(rtracklayer,import.bed)

@@ -1,6 +1,6 @@
 Package: chromfx
 Type: Package
-Title: What the Package Does (Title Case)
+Title: ATAC-seq functions
 Version: 0.1.0
 Author: Who wrote it
 Maintainer: The package maintainer <yourself@somewhere.net>
@@ -17,5 +17,7 @@ Remotes:
   bioc::3.9/GenomeInfoDb,
   bioc::3.9/BiocGenerics,
   bioc::3.9/rtracklayer
-Depends: R (>= 3.5.0), GenomicRanges, SummarizedExperiment
-RoxygenNote: 6.1.1
+Depends: R (>= 3.6.0), GenomicRanges, SummarizedExperiment
+RoxygenNote: 7.1.1
+Suggests: BiocStyle, knitr, rmarkdown
+VignetteBuilder: knitr

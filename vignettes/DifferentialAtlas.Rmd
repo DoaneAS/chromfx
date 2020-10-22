@@ -1,0 +1,114 @@
+---
+title: "Vignette Title"
+author:
+- name: Ashley Stephen Doane
+  affiliation: Weill Cornell Medicine
+  email: ashley.doane@gmail.com
+package: chromfx
+output:
+  BiocStyle::html_document
+abstract: |
+  Description of your vignette
+vignette: |
+  %\VignetteIndexEntry{Generate differential ATAC-seq atlas}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Steps to generate an ATAC atlas:
+
+* Process ATAC-seq data
+
+* Generate peak atlas ranges, method from TCGA ATAC paper.
+
+* Read ATAC-seq fragment end points in atlas ranges for each sample from bam files.
+
+* Quantile normalize, with GC content correction
+
+* Use normalization factors in call to DESeq.
+
+
+```{r, eval=FALSE}
+
+library(broom)
+library(dplyr)
+library(tidyr)
+library(lmtest)
+library(sandwich)
+library(modelr)
+library(ggthemes)
+library(ggplot2)
+library(tidyverse)
+library(chromVAR)
+library(BSgenome.Hsapiens.UCSC.hg38)
+library(SummarizedExperiment)
+library(chromfx)
+library(EDASeq)
+## read peak summits
+psum <- Sys.glob("Sample*/*.bed")
+
+
+psums <- readPeakSummits(psum)
+atlas.peaks <- getAtlasPeaks(psums)
+
+atlas.peaks <- sort.GenomicRanges(atlas.peaks)
+
+rtracklayer::export.bed(atlas.peaks, "atlas.peaks.bed")
+## Generate a DataFrame of sample information, including ATAC-seq bam file for each sample, for use in function below;
+pd <- data.frame(bam=c("bam1", "bam2"), sample=c("sample1", "sample2"))
+pd <- DataFrame(pd)
+
+sampleAtlas <- chromVAR::getCounts(alignment_files =pd$bam ,peaks = atlas.peaks, colData =pd )
+
+
+sampleAtlas <-  chromVAR::addGCBias(sampleAtlas, genome=BSgenome.Hsapiens.UCSC.hg38)
+atlas <- rowRanges(sampleAtlas)
+names(atlas) <- basename(atlas$name)
+atlas$PeakID <- names(atlas)
+rowRanges(sampleAtlas) <- atlas
+
+pd.eda = as.data.frame(colData(sampleAtlas))
+pd.eda$conditions = colData(sampleAtlas)$cellType
+gc.df <- data.frame(gc=atlas$bias)
+rownames(gc.df) = atlas$PeakID
+eda  <- newSeqExpressionSet(counts = assay(sampleAtlas), featureData = gc.df, phenoData = pd.eda, row.names=atlas$PeakID)
+
+edaoffset = withinLaneNormalization(eda,"gc", which = "full", offset = TRUE, round = FALSE)
+edaoffset = betweenLaneNormalization(edaoffset, which = "full", round = FALSE, offset = TRUE)
+
+datawithin = withinLaneNormalization(eda,"gc" , which = "full")
+
+dataNorm = betweenLaneNormalization(datawithin, which = "full")
+edacounts <- as(dataNorm, "CountDataSet")
+
+
+edac =  edacounts@assayData$counts
+#biasPlot(eda, "gc", log=TRUE, ylim=c(1,5), color_code=7)
+#biasPlot(dataNorm, "gc", log=TRUE, ylim=c(1,5), color_code = 7)
+
+all( rownames(sampleAtlas) == atlas$PeakID)  #check
+all(dimnames(assay(sampleAtlas))[[1]] == atlas$PeakID) #check
+assays(sampleAtlas)$edaFullQuantile  <- edac
+
+EDASeqNormFactors <- exp(-1 * offst(edaoffset))
+assays(sampleAtlas)$EDASeqNormFactors  = EDASeqNormFactors
+
+sampleAtlas$cellType <- relevel(sampleAtlas$cellType, ref = "NB")
+
+ddsb = DESeqDataSet(sampleAtlas, ~cellType)
+normalizationFactors(ddsb) = assays(sampleAtlas)$EDASeqNormFactors 
+ddsb <- DESeq(ddsb)
+
+dds.eda = DESeqDataSet(sampleAtlas.selCases, ~cellType)
+normalizationFactors(dds.eda) = assays(sampleAtlas.selCases)$EDASeqNormFactors 
+
+design(dds.eda)
+dds.eda = DESeq(dds.eda)
+#dds.eda.lrt = DESeq(dds.eda, test = "LRT", reduced = ~assay )
+#res.lrt = results(dds.eda.lrt)
+```
+
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```

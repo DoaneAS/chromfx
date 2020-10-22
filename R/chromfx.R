@@ -29,7 +29,7 @@
 #' @importFrom rtracklayer import.bed
 #' @importFrom GenomeInfoDb seqlevels
 #' @param psum paths to sample peak summits bed file
-#' @param genome reference genome, either "hg3* (default) or "mm10"
+#' @param genome reference genome, either "hg38 (default) or "mm10"
 #' @return GRanges
 #' @export
 readPeakSummits <- function(psum, genome="hg38"){
@@ -64,23 +64,52 @@ keepone <- function(gr, hitlist, FUN=which.max) {
     grx[unique(names(grx))]
 }
 
-
-
-
-
 #' @name getAtlasPeaks
-#' @title getHic
+#' @title getAtlasPeaks
 #' @description
 #' function that takes a GRanges of peak summits and geenerates fixed width peak atlas
 #' @keywords straw
 #' @param peaksummits GRanges of peak summits with coloumn "score"
 #' @return GRanges
-#' @export
+#' @import GenomicRanges
+#' @import SummarizedExperiment
 #' @author Ashley S Doane
+#' @export
 getAtlasPeaks <- function(peaksummits)
 {
     keepone <- function(gr, hitlist, FUN=which.max) {
-        idx0 <- as(FUN(extractList(gr$score, hitlist)), "List")
+        idx0 <- as(which.max(extractList(gr$score, hitlist)), "List")
+        idx1 <- unlist(extractList(seq_along(gr), hitlist)[idx0])
+        grx =  gr[idx1]
+        grn <- grx[unique(names(grx))]
+        return(grn)
+    }
+
+    gr = peaksummits[order(peaksummits$score, decreasing=TRUE)]
+    #gr <- resize(gr, fix="center", width=500)
+    grr <- GenomicRanges::reduce(gr)
+    r1 = length(gr)
+    gr = gr[order(gr$score, decreasing=TRUE)]
+    hitlist <- as(GenomicRanges::findOverlaps(gr), "List")
+    gr <- keepone(gr, hitlist)
+    r2 <- length(gr) - 1
+    message(print(r1))
+    while (r1 != r2) {
+        r1 = length(gr)
+        gr = gr[order(gr$score, decreasing=TRUE)]
+        hitlist <- as(findOverlaps(gr), "List")
+        gr <- keepone(gr, hitlist)
+        r2 = length(gr)
+        message(print(r2))
+    }
+    return(gr)
+}
+
+
+getAtlasPeaks <- function(peaksummits)
+{
+    keepone <- function(gr, hitlist, FUN=which.max) {
+        idx0 <- as(which.max(extractList(gr$score, hitlist)), "List")
         idx1 <- unlist(extractList(seq_along(gr), hitlist)[idx0])
         ## FIXME: what about NA's when there are no matching ranges?
         grx =  gr[idx1]
@@ -107,3 +136,4 @@ getAtlasPeaks <- function(peaksummits)
     }
     return(gr)
 }
+

@@ -2,7 +2,7 @@
 % Please edit documentation in R/chromfx.R
 \name{getAtlasPeaks}
 \alias{getAtlasPeaks}
-\title{getHic}
+\title{getAtlasPeaks}
 \usage{
 getAtlasPeaks(peaksummits)
 }
