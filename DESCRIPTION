@@ -18,6 +18,6 @@ Remotes:
   bioc::3.9/BiocGenerics,
   bioc::3.9/rtracklayer
 Depends: R (>= 3.6.0), GenomicRanges, SummarizedExperiment
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Suggests: BiocStyle, knitr, rmarkdown
 VignetteBuilder: knitr

@@ -66,11 +66,11 @@ readPeakSummits <- function(psum, genome="hg38"){
 #' @importFrom rtracklayer import.bed
 #' @importFrom rtracklayer import.bed
 #' @importFrom GenomeInfoDb seqlevels
-#' @param psum paths to sample peak summits bed file
+#' @param npeaks paths to sample narrowPeak file
 #' @param genome reference genome, either "hg38 (default) or "mm10"
 #' @return GRanges
 #' @export
-readNarrowPeaks <- function(npeaks, genome="hg38"){
+readNarrowPeakSummits <- function(npeaks, genome="hg38"){
     extraCols_narrowPeak =
         c(singnalValue = "numeric",
           pValue = "numeric",
