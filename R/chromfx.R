@@ -56,6 +56,57 @@ readPeakSummits <- function(psum, genome="hg38"){
 }
 
 
+
+
+#' @name readNarrowPeakSummits
+#' @title readNarrowPeakSummits
+#' @description
+#' function that reads narrowPeak ATAC peaks and returns 500bp ranges centered on summit
+#' @keywords peaks
+#' @importFrom rtracklayer import.bed
+#' @importFrom rtracklayer import.bed
+#' @importFrom GenomeInfoDb seqlevels
+#' @param psum paths to sample peak summits bed file
+#' @param genome reference genome, either "hg38 (default) or "mm10"
+#' @return GRanges
+#' @export
+#'
+readPeakSummits <- function(npeaks, genome="hg38"){
+    extraCols_narrowPeak =
+        c(singnalValue = "numeric",
+          pValue = "numeric",
+          qValue = "numeric",
+          peak = "integer")
+
+    names(npeaks) <- basename(npeaks)
+    if (genome=="mm10"){
+        slevels <- GenomeInfoDb::seqlevels(mm10s)
+    } else {
+        slevels <- GenomeInfoDb::seqlevels(hg38s)
+    }
+    summG = list()
+    for (p in names(npeaks)){
+        print(p)
+        z  = rtracklayer::import.bed(npeaks[[p]], extraCols = extraCols_narrowPeak)
+        GenomeInfoDb::seqlevels(z, pruning.mode="coarse") <- slevels
+        psum <- z$peak
+        pstart <- start(z)
+        start(z) <- pstart + psum -250
+        end(z) <- start(z) + 500
+        #zz <- GenomicRanges::resize(z, width=500, fix="center")
+        z$score <- z$pValue
+        z$scoreO <- z$score
+        z$score <- z$score / length(z)  ## normlaiza seq depth
+        names(z) <- basename(z$name)
+        summG[[p]] <- trim(z) ## per sample unique summits
+    }
+    grl <- GRangesList(summG)
+    gr <- unlist(grl)
+    return(gr)
+}
+
+
+
 keepone <- function(gr, hitlist, FUN=which.max) {
     idx0 <- as(FUN(extractList(gr$score, hitlist)), "List")
     idx1 <- unlist(extractList(seq_along(gr), hitlist)[idx0])
