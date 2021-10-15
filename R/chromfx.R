@@ -70,7 +70,6 @@ readPeakSummits <- function(psum, genome="hg38"){
 #' @param genome reference genome, either "hg38 (default) or "mm10"
 #' @return GRanges
 #' @export
-#'
 readNarrowPeaks <- function(npeaks, genome="hg38"){
     extraCols_narrowPeak =
         c(singnalValue = "numeric",
